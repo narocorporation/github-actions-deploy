@@ -1,0 +1,95 @@
+name: 'Naro Deploy'
+description: 'Deploys to ECS in the Naro way'
+
+inputs:
+  aws_region:
+    required: true
+    description: AWS region to operate in, e.g. `us-east-1`
+  task_definition_family:
+    required: true
+    description: ECS Task Definition family to use as a template, e.g. `bff-template`
+  ecr_repository:
+    required: true
+    description: Name of the ECR repository to push images to, e.g. `bff-50e8673`
+  ecs_cluster:
+    required: true
+    description: Name of the ECS cluster to deploy the service to, e.g. `naro-bff-7b5b24b`
+  ecs_service:
+    required: true
+    description: Name of the ECS service to deploy, e.g. `bff-8c13d47`
+  dockerfile_path:
+    required: false
+    description: Optional path to the dockerfile for building this image, e.g. `./bff/dockerfile`
+    default: dockerfile
+
+runs:
+  using: "composite"
+  steps:
+    # Checkout the repo
+    - name: Check out repository
+      uses: actions/checkout@v2
+
+    # Assume an AWS role
+    - name: Configure AWS
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: arn:aws:iam::688865856606:role/apps-master-a4e1ebd
+        aws-region: ${{ inputs.aws_region }}
+
+    # Point docker to ECR
+    - name: Login to AWS ECR
+      uses: aws-actions/amazon-ecr-login@v1
+      id: login-ecr
+
+    # Build and push the docker image
+    - name: Build and Push
+      id: docker-build
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ inputs.ecr_repository }}
+        IMAGE_TAG: ${{ github.sha }}
+        DOCKERFILE: ${{ inputs.dockerfile_path || 'dockerfile' }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f $DOCKERFILE .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+    # Clone the template task definition and update its image field
+    - name: Download Task Definition
+      env:
+        TASK_DEFINITION_FAMILY: ${{ inputs.task_definition_family }}
+      run: |
+        aws ecs describe-task-definition --task-definition $TASK_DEFINITION_FAMILY --query taskDefinition >task-definition-old.json
+        jq "del(.compatibilities, .taskDefinitionArn, .requiresAttributes, .revision, .status, .registeredAt, .registeredBy)" task-definition-old.json | \
+          jq ".family = \"$(echo $TASK_DEFINITION_FAMILY | sed s/-template//g )\"" >task-definition.json
+
+    - name: Update Task Definition
+      id: update-task-definition
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: task-definition.json
+        container-name: web
+        image: ${{ steps.docker-build.outputs.image }}
+
+    # Push the new task definition
+    - name: Deploy Service
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        wait-for-service-stability: false
+        task-definition: ${{ steps.update-task-definition.outputs.task-definition }}
+        cluster: ${{ inputs.ecs_cluster }}
+        service: ${{ inputs.ecs_service }}
+
+    # Notify slack on success
+    - name: Send Slack Notification
+      if: always()
+      uses: slackapi/slack-github-action@v1.18.0
+      with:
+        payload: |
+          {
+            "link": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "success": "${{ job.status }}",
+            "repo": "${{ inputs.ecs_service }}"
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
