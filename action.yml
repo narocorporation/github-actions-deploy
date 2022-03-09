@@ -20,6 +20,9 @@ inputs:
   ecs_service:
     required: true
     description: Name of the ECS service to deploy, e.g. `bff-8c13d47`
+  slack_webhook_url:
+    required: true
+    description: Slack webhook URL for reporting deploy failures/successes
   dockerfile_path:
     required: false
     description: Optional path to the dockerfile for building this image, e.g. `./bff/dockerfile`
@@ -47,6 +50,7 @@ runs:
     # Build and push the docker image
     - name: Build and Push
       id: docker-build
+      shell: bash
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: ${{ inputs.ecr_repository }}
@@ -59,6 +63,7 @@ runs:
 
     # Clone the template task definition and update its image field
     - name: Download Task Definition
+      shell: bash
       env:
         TASK_DEFINITION_FAMILY: ${{ inputs.task_definition_family }}
       run: |
@@ -95,4 +100,4 @@ runs:
             "repo": "${{ inputs.ecs_service }}"
           }
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook_url }}
