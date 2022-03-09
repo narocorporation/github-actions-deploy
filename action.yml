@@ -2,6 +2,9 @@ name: 'Naro Deploy'
 description: 'Deploys to ECS in the Naro way'
 
 inputs:
+  aws_role:
+    required: true
+    description: ARN of the role to (attempt to) assume when performing actions on AWS
   aws_region:
     required: true
     description: AWS region to operate in, e.g. `us-east-1`
@@ -33,7 +36,7 @@ runs:
     - name: Configure AWS
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        role-to-assume: arn:aws:iam::688865856606:role/apps-master-a4e1ebd
+        role-to-assume: ${{ inputs.aws_role }}
         aws-region: ${{ inputs.aws_region }}
 
     # Point docker to ECR

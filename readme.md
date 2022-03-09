@@ -11,6 +11,7 @@ jobs:
     uses: narocorporation/github-actions-deploys@master
     with:
       # Example values
+      aws_role: arn:aws:iam::688865856606:role/apps-master-a4e1ebd
       aws_region: us-east-1
       task_definition: bff-template
       ecr_repository: bff-50e8673
