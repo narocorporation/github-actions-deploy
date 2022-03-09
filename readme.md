@@ -19,7 +19,7 @@ Deploys an ECS service.
 ```yaml
 jobs:
   deploy:
-    uses: narocorporation/github-actions/service-deploy.yml@master
+    uses: narocorporation/github-actions/.github/workflows/service-deploy.yml@master
     with:
       # Example values
       aws_region: us-east-1
@@ -39,7 +39,7 @@ Lints Typescript within a repo, so long as that repo has a `package.json` with a
 ```yaml
 jobs:
   lint:
-    uses: narocorporation/github-actions/typescript-lint.yml@master
+    uses: narocorporation/github-actions/.github/workflows/typescript-lint.yml@master
 ```
 
 ## Jest Test
@@ -51,5 +51,5 @@ Runs Jest tests on a nodejs repo.
 ```yaml
 jobs:
   test:
-    uses: narocorporation/github-actions/jest-test.yml@master
+    uses: narocorporation/github-actions/.github/workflows/jest-test.yml@master
 ```
