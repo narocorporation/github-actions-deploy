@@ -29,3 +29,27 @@ jobs:
       ecs_service: bff-8c13d47
       dockerfile_path: ./bff/dockerfile # Optional; defaults to dockerfile
 ```
+
+## Typescript Lint
+
+Lints Typescript within a repo, so long as that repo has a `package.json` with a `lint` command.
+
+#### Usage:
+
+```yaml
+jobs:
+  lint:
+    uses: narocorporation/github-actions/typescript-lint.yml@master
+```
+
+## Jest Test
+
+Runs Jest tests on a nodejs repo.
+
+#### Usage
+
+```yaml
+jobs:
+  test:
+    uses: narocorporation/github-actions/jest-test.yml@master
+```
