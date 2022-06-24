@@ -10,7 +10,7 @@ inputs:
     description: AWS region to operate in, e.g. `us-east-1`
   task_definition_family:
     required: true
-    description: ECS Task Definition family to use as a template, e.g. `bff-template`
+    description: ECS Task Definition family to update, e.g. `bff`
   ecr_repository:
     required: true
     description: Name of the ECR repository to push images to, e.g. `bff-50e8673`
@@ -27,6 +27,10 @@ inputs:
     required: false
     description: Optional path to the dockerfile for building this image, e.g. `./bff/dockerfile`
     default: ./Dockerfile
+  container_name:
+    required: false
+    description: Optional name of the container to update when deploying, e.g. `web`
+    default: web
 
 runs:
   using: "composite"
@@ -76,7 +80,7 @@ runs:
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: task-definition.json
-        container-name: web
+        container-name: ${{ inputs.container_name }}
         image: ${{ steps.docker-build.outputs.image }}
 
     # Push the new task definition
