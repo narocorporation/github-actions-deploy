@@ -20,4 +20,5 @@ jobs:
       ecs_service: bff-8c13d47
       dockerfile_path: ./bff/dockerfile # Optional; defaults to dockerfile
       container_name: the-main-conatiner # Optional; defaults to web
+      push_image: no # Optional; defaults to yes
 ```

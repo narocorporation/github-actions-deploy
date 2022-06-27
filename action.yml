@@ -31,6 +31,13 @@ inputs:
     required: false
     description: Optional name of the container to update when deploying, e.g. `web`
     default: web
+  push_image:
+    required: false
+    description: >
+      Optional flag that controls whether to push a container image or just assume it already exists.
+      Useful if you need to deploy to multiple tasks from the same image; the first deploy should
+      publish the container while the rest shouldn't.
+    default: yes
 
 runs:
   using: "composite"
@@ -54,6 +61,7 @@ runs:
     # Build and push the docker image
     - name: Build and Push
       id: docker-build
+      if: inputs.push_image == 'yes'
       shell: bash
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
