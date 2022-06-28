@@ -71,6 +71,16 @@ runs:
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f $DOCKERFILE .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    # DRY
+    - name: Make image name
+      id: make-image-name
+      shell: bash
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: ${{ inputs.ecr_repository }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
     # Clone the template task definition and update its image field
@@ -89,7 +99,7 @@ runs:
       with:
         task-definition: task-definition.json
         container-name: ${{ inputs.container_name }}
-        image: ${{ steps.docker-build.outputs.image }}
+        image: ${{ steps.make-image-name.outputs.image }}
 
     # Push the new task definition
     - name: Deploy Service
