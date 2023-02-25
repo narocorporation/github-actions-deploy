@@ -18,8 +18,9 @@ inputs:
     required: true
     description: Name of the ECS cluster to deploy the service to, e.g. `naro-bff-7b5b24b`
   ecs_service:
-    required: true
-    description: Name of the ECS service to deploy, e.g. `bff-8c13d47`
+    required: false
+    description: Name of the ECS service to deploy, e.g. `bff-8c13d47`.  If missing, no service deploy is attempted.
+    default: SKIP
   slack_webhook_url:
     required: true
     description: Slack webhook URL for reporting deploy failures/successes
@@ -104,6 +105,7 @@ runs:
     # Push the new task definition
     - name: Deploy Service
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      if: inputs.ecs_service != 'SKIP'
       with:
         wait-for-service-stability: false
         task-definition: ${{ steps.update-task-definition.outputs.task-definition }}

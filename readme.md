@@ -17,8 +17,8 @@ jobs:
       task_definition_family: bff
       ecr_repository: bff-50e8673
       ecs_cluster: naro-bff-7b5b24b
-      ecs_service: bff-8c13d47
+      ecs_service: bff-8c13d47 # Optional; if missing, no service deploy is performed
       dockerfile_path: ./bff/dockerfile # Optional; defaults to dockerfile
-      container_name: the-main-conatiner # Optional; defaults to web
+      container_name: the-main-container # Optional; defaults to web
       push_image: no # Optional; defaults to yes
 ```
