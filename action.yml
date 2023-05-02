@@ -113,6 +113,19 @@ runs:
         cluster: ${{ inputs.ecs_cluster }}
         service: ${{ inputs.ecs_service }}
 
+    - name: Deploy Scheduled Task
+      if: inputs.ecs_scheduled_task != 'SKIP'
+      shell: bash
+      env:
+        TASK_DEFINITION_FILE: ${{ steps.update-task-definition.outputs.task-definition }}
+        TASK_DEFINITION_ARN: ${{ steps.update-task-definition.outputs.task-definition-arn }}
+        CLUSTER: ${{ inputs.ecs_cluster }}
+        SCHEDULED_TASK: ${{ inputs.ecs_scheduled_task }}
+        EVENT_BRIDGE_RULE: ${{ inputs.event_bridge_rule }}
+      run: |
+        echo $(aws events list-targets-by-rule —rule “$EVENT_BRIDGE_RULE”) | jq ‘.Targets[0].EcsParameters.TaskDefinitionArn=’\”$TASK_DEFINITION_ARN\” > event-rule.json
+        aws events put-targets --rule $SCHEDULED_TASK —cli-input-json file://event-rule.json
+
     # Notify slack on success
     - name: Send Slack Notification
       if: always()
